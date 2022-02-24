@@ -1,19 +1,44 @@
-import itertools
-import random
+from itertools import compress, product, combinations
+from random import sample
 
 suits = ('o','e','c','p')
-values = (1,2,3,4,5,6,7,8,9,10,11,12,13)
+values = (2,3,4,5,6,7,8,9,10,11,12,13,14)
+
 deck = [str(card[0]) + card[1] for card in list(product(values, suits))]
-hand_dict ={ 0:  "Straight Flush", 1:  "Quads", 2:  "Full House", 3:  "Flush", 4:  "Straight", 5:  "Trips", 6:  "Two Pair", 7:  "One Pair", 8:  "High Card" }
-card_dict = { "A": 1, "K": 13, "Q": 12, "J": 11, "T": 10,  1: "A", 14: "A", 13: "K", 12: "Q", 11: "J"}
+
+hand_dict ={
+        0:  "Straight Flush",
+        1:  "Quads",
+        2:  "Full House",
+        3:  "Flush",
+        4:  "Straight",
+        5:  "Trips",
+        6:  "Two Pair",
+        7:  "One Pair",
+        8:  "High Card"
+        }
+
+card_dict = {
+        "A": 14,
+        "K": 13,
+        "Q": 12,
+        "J": 11,
+        "D": 10,
+          1: "A",
+         14: "A",
+         13: "K",
+         12: "Q",
+         11: "J"
+        }
 
 def rotate(l, n):
     return l[n:] + l[:n]
+
 def hasConsecutive(arr, amount):
     last = 0
     count = 0
     arr = [int(txt[:-1]) for txt in arr]
-    if any([num == 1 for num in arr]):
+    if any(num == 1 for num in arr):
         arr = arr + [14]
     arr = sorted(arr, reverse = True)
     for i in range(len(arr)):
@@ -24,8 +49,10 @@ def hasConsecutive(arr, amount):
         if amount <= count:
             return True, arr[i] + 4
     return False, 0
+
 def getHand(held_cards, table_cards):
     all_cards = sorted(held_cards + table_cards)
+
     all_cards = [str(card_dict[card[0].upper()]) + card[-1] if card[0].isalpha() else card for card in all_cards]
     card_vals = sorted([int(txt[:-1]) for txt in all_cards], reverse = True)
     hands = [8]
@@ -40,10 +67,12 @@ def getHand(held_cards, table_cards):
                 hands.append(0)
                 hand_cards.append([high])
             break
+
     straight, high = hasConsecutive(all_cards, 5)
     if straight :
         hands.append(4)
         hand_cards.append([high])
+
     for value in rotate(sorted(values, reverse = True),-1):
         dups = [num == value for num in card_vals]
         count_dups = sum(dups)
@@ -70,9 +99,12 @@ def getHand(held_cards, table_cards):
                     if count_dups == 2:
                         hands.append(6)
                         hand_cards.append([[list(compress(card_vals, dups))[0]] + [list(compress(card_vals, more_dups))[0]] + [list(compress(card_vals, [not (dups[i] or more_dups[i]) for i in range(len(dups))]))[0]]])
+
     best_hand = min(hands)
     hand = hand_cards[hands.index(best_hand)]
+
     return best_hand, hand
+
 def compareHands(our_hand, our_highs, opp_hand, opp_highs):
     if our_hand < opp_hand:
         return "W"
@@ -85,6 +117,7 @@ def compareHands(our_hand, our_highs, opp_hand, opp_highs):
             elif our_highs[i] < opp_highs[i]:
                 return "L"
         return "D"
+
 def Check_Odds(our_cards, table_cards = []):
     unseen_deck = [card for card in deck if not (card in (our_cards + table_cards))]
     results = []
@@ -96,10 +129,12 @@ def Check_Odds(our_cards, table_cards = []):
         for oppCards in sample(undrawn_combs, int(min(1e3,len(undrawn_combs)))):
             opp_hand, opp_highs = getHand(list(oppCards), table_cards + list(tableCards))
             results.append(compareHands(our_hand, our_highs, opp_hand, opp_highs))
+
     wins = sum([result == "W" for result in results])
     total = len(results)
     odds = wins/total
     return odds
+
 def Request_Card(place, num = -1):
     if num == -1:
         ind = ""
@@ -118,6 +153,7 @@ def Request_Card(place, num = -1):
         input(place + " card " + str(num+1) + " - Invalid card: Press ENTER to try again")
         inp = Request_Card(place, num)
     return inp
+
 while True:
     Pocket = []
     Table = []
